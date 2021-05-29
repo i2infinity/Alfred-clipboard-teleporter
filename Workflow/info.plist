@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>bundleid</key>
+	<string></string>
+	<key>category</key>
+	<string>Tools</string>
+	<key>connections</key>
+	<dict>
+		<key>75E443E8-537B-4306-B83A-525A0D559FC5</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>CF05CEE4-3554-4D64-9BB0-5C9972AC1477</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>BEB93E82-184D-494B-9F81-B7AE95BEA3E5</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>CF05CEE4-3554-4D64-9BB0-5C9972AC1477</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>CF05CEE4-3554-4D64-9BB0-5C9972AC1477</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>CBCFAF35-F38D-4673-AF55-2D3B058ABE34</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+	</dict>
+	<key>createdby</key>
+	<string>Amrish Ravidas</string>
+	<key>description</key>
+	<string>Saves images from clipboard history to PNG</string>
+	<key>disabled</key>
+	<false/>
+	<key>name</key>
+	<string>ImageTeleporter</string>
+	<key>objects</key>
+	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>autopaste</key>
+				<true/>
+				<key>clipboardtext</key>
+				<string>![](http://127.0.0.1:8887/{var:targetfilename})</string>
+				<key>ignoredynamicplaceholders</key>
+				<false/>
+				<key>transient</key>
+				<true/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>CBCFAF35-F38D-4673-AF55-2D3B058ABE34</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>action</key>
+				<integer>0</integer>
+				<key>argument</key>
+				<integer>0</integer>
+				<key>focusedappvariable</key>
+				<false/>
+				<key>focusedappvariablename</key>
+				<string></string>
+				<key>hotkey</key>
+				<integer>3</integer>
+				<key>hotmod</key>
+				<integer>1179648</integer>
+				<key>hotstring</key>
+				<string>F</string>
+				<key>leftcursor</key>
+				<false/>
+				<key>modsmode</key>
+				<integer>0</integer>
+				<key>relatedAppsMode</key>
+				<integer>0</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.trigger.hotkey</string>
+			<key>uid</key>
+			<string>BEB93E82-184D-494B-9F81-B7AE95BEA3E5</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>68</integer>
+				<key>script</key>
+				<string>from contextlib import contextmanager
+import os
+import sys
+import sqlite3
+import json
+from PIL import Image
+
+home_path = os.getenv(&apos;HOME&apos;)
+db_path = os.path.join(home_path, os.getenv(&apos;db_path&apos;), os.getenv(&apos;db_name&apos;))
+
+@contextmanager
+def database(path):
+    db = sqlite3.connect(path)
+    yield db
+    db.close()
+
+tiff_file_path = &apos;&apos;
+with database(db_path) as db:
+    rows = db.execute(&quot;SELECT dataHash,item,apppath,strftime(&apos;%Y-%m-%d %H:%M&apos;,ts+978307200,&apos;unixepoch&apos;,&apos;localtime&apos;) from clipboard WHERE dataType = 1 ORDER BY ts DESC LIMIT ?&quot;, [1])
+    for r in rows:
+      tiff_file_path = os.path.join(home_path, os.getenv(&apos;db_path&apos;), os.getenv(&apos;db_name&apos;) + &quot;.data&quot;, r[0])
+      break
+
+# Create destination folder
+destination_directory = os.path.join(home_path, os.getenv(&apos;dest_dir&apos;))
+
+#sys.stderr.write(&apos;destination_directory: &apos; + destination_directory + &apos;\n&apos;)
+if not os.path.exists(destination_directory):
+    os.mkdir(destination_directory)
+
+sys.stderr.write(&apos;tiff_file_path: &apos; + tiff_file_path + &apos;\n&apos;)
+source_file_name = tiff_file_path.split(os.sep)[-1]
+target_file_name_without_extension = os.path.splitext(source_file_name)[0]
+target_file_name = target_file_name_without_extension + &apos;.jpg&apos;
+target_file_path = os.path.join(destination_directory, target_file_name)
+#sys.stderr.write(&apos;target_file_path: &apos; + target_file_path + &apos;\n&apos;)
+
+if os.path.exists(tiff_file_path):
+  sys.stderr.write(&apos;File exists!\n&apos;)
+  img = Image.open(tiff_file_path)
+  rgb_image = img.convert(&apos;RGB&apos;)
+  rgb_image.save(target_file_path, &quot;JPEG&quot;, quality=100)
+  sys.stderr.write(&apos;Saved file to: &apos; + target_file_path + &apos;\n&apos;)
+
+data = {
+    &apos;alfredworkflow&apos;: {
+        &apos;arg&apos;: &apos;&apos;,
+        &apos;variables&apos;: {
+            &apos;targetfilename&apos;: target_file_name,
+            &apos;targetfilepath&apos;: target_file_path,
+        },
+    }
+}
+json.dump(data, sys.stdout)</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>3</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>CF05CEE4-3554-4D64-9BB0-5C9972AC1477</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>focusedappvariable</key>
+				<false/>
+				<key>focusedappvariablename</key>
+				<string></string>
+				<key>keyword</key>
+				<string>pi</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.trigger.snippet</string>
+			<key>uid</key>
+			<string>75E443E8-537B-4306-B83A-525A0D559FC5</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+	</array>
+	<key>readme</key>
+	<string># ClipSaver 
+
+This workflow has two modes and is triggered by the `cs` keyword by default.
+
+Mode 1 presents the images from the clipboard history via a Script Filter, and allows selecting one image to be extracted, converted to PNG (Alfred saves them as .tiff) and placed in a folder of your choosing (default is on the Desktop, in a folder called `saved_clips`)
+
+Mode 2 accepts an integer (N) and will recursively save the last N images to the designated folder.
+
+Both modes will remove the clipboard entry as well as the .tiff from Alfred&apos;s database upon successful conversion.
+
+## Workflow Variables
+
+- `db_name` defaults to `clipboard.alfdb` (required)
+- `db_path` defaults to `Library/Application Support/Alfred/Databases` (required)
+- `dest_dir` defaults to `Desktop/saved_clips` (required)
+- `sf_clip_limit` (default: empty) you can optionally specify a limit to constrain the number of results displayed in the Script Filter
+
+## Usage Tips
+
+- Tap `SHIFT` while navigating through Script Filter results to get a QuickLook preview of the image. While QL is displayed, you can use the Arrow keys to flip through results.
+- This makes use of the JSON `match` property so you can filter the results by the name of the App from which it was captured. E.g. with `cs chrome` you&apos;ll see only images from Google Chrome.
+
+This workflow should not require any dependencies, but was only tested on macOS 10.15.3 + Alfred 4.0.8.1135.
+
+## Screenshot:
+![screenshot](clipsaver.png)
+
+## Download:
+https://github.com/luckman212/alfredworkflows/blob/master/ClipSaver.alfredworkflow?raw=true
+
+## Forum topic:
+https://www.alfredforum.com/topic/14400-clipsaver-save-images-from-clipboard-history-to-png-files/</string>
+	<key>uidata</key>
+	<dict>
+		<key>75E443E8-537B-4306-B83A-525A0D559FC5</key>
+		<dict>
+			<key>xpos</key>
+			<integer>55</integer>
+			<key>ypos</key>
+			<integer>210</integer>
+		</dict>
+		<key>BEB93E82-184D-494B-9F81-B7AE95BEA3E5</key>
+		<dict>
+			<key>xpos</key>
+			<integer>55</integer>
+			<key>ypos</key>
+			<integer>60</integer>
+		</dict>
+		<key>CBCFAF35-F38D-4673-AF55-2D3B058ABE34</key>
+		<dict>
+			<key>xpos</key>
+			<integer>475</integer>
+			<key>ypos</key>
+			<integer>60</integer>
+		</dict>
+		<key>CF05CEE4-3554-4D64-9BB0-5C9972AC1477</key>
+		<dict>
+			<key>xpos</key>
+			<integer>270</integer>
+			<key>ypos</key>
+			<integer>60</integer>
+		</dict>
+	</dict>
+	<key>variables</key>
+	<dict>
+		<key>db_name</key>
+		<string>clipboard.alfdb</string>
+		<key>db_path</key>
+		<string>Library/Application Support/Alfred/Databases</string>
+		<key>dest_dir</key>
+		<string></string>
+	</dict>
+	<key>version</key>
+	<string>1.1.0</string>
+	<key>webaddress</key>
+	<string>https://github.com/i2infinity/Alfred-clipboard-teleporter</string>
+</dict>
+</plist>
