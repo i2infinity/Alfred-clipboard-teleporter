@@ -1,7 +1,6 @@
 # Alfred Clipboard Teleporter
 <img src="https://user-images.githubusercontent.com/1700689/120085243-4412c500-c08b-11eb-9cea-7d973894c38e.jpg" width=700>
-An Alfred workflow to copy the most recent image from Alfred clipboard into a folder hosted by a local webserver. 
-> This workflow is particular to one of my daily routines. You might want to evolve this workflow to your custom needs or reuse parts of it to automate your daily life!
+An Alfred workflow to copy the most recent image from Alfred clipboard into a folder hosted by a local webserver. This workflow is particular to one of my daily routines. You might want to evolve this workflow to your custom needs or reuse parts of it to automate your daily life!
 
 ## Pre-requisites
 1. Install https://www.alfredapp.com/
